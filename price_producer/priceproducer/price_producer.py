@@ -53,22 +53,24 @@ class PriceProducerService:
 
     def __init__(self, producer):
         self._producer = producer()
+        self._timer = 10
 
     async def asyncexecute(self):
-        counter = 100
-        while counter:
+        # counter = 100
+        while True:
             await self._producer.produce()
             print(f'produce 1 more')
-            await asyncio.sleep(1)
-            counter -= 1
+            await asyncio.sleep(self._timer)
+            # counter -= 1
 
     def execute(self):
-        counter = 100
-        while counter:
+        # counter = 100
+        # while counter:
+        while True:
             self._producer.produce()
             print(f'produce 1 more')
-            time.sleep(1)
-            counter -= 1
+            time.sleep(self._timer)
+            # counter -= 1
 
 
 def main():

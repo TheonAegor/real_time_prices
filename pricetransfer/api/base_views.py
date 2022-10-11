@@ -1,8 +1,8 @@
 import typing
 from aiohttp import web
 
-from dto.application_dto import Request
-from dto.application_dto import Application
+from pricetransfer.dto.application_dto import Request
+from pricetransfer.dto.application_dto import Application
 
 
 class View(web.View):

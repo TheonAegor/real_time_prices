@@ -1,9 +1,9 @@
 from aiohttp import web
 
-from api.base_views import View
-from dao.ws_accessor import WSAccessor
-from service.price_transfer.price_transfer_service import PriceTransferService
-from service.logger.logging_service import get_my_logger
+from pricetransfer.api.base_views import View
+from pricetransfer.dao.ws_accessor import WSAccessor
+from pricetransfer.service.price_transfer.price_transfer_service import PriceTransferService
+from pricetransfer.service.logger.logging_service import get_my_logger
 
 logger = get_my_logger('API')
 

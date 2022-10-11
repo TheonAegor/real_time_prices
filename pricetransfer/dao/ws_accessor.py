@@ -5,31 +5,33 @@ import typing as tp
 from dataclasses import asdict
 
 from aiohttp import web
-from dao.base_accessors import IBaseAccessor
-from dto.application_dto import Request
-from dto.protocol_dto import Event
-from dto.protocol_dto import ServerEventKind
-from service.event_handler.client_event_manager import ClientEventManager
-from service.event_handler.server_event_manager import ServerEventManager
+from pricetransfer.dao.base_accessors import IBaseAccessor
+from pricetransfer.dto.application_dto import Request
+from pricetransfer.dto.protocol_dto import Event
+from pricetransfer.dto.protocol_dto import ServerEventKind
+# from service.event_handler.client_event_manager import ClientEventManager
+# from service.event_handler.server_event_manager import ServerEventManager
+from pricetransfer.service.event_handler.general_event_manager import GeneralEventManager
+from pricetransfer.dao.kafka_accessor import KafkaAccessor
 
 class WSConnectionNotFound(Exception):
     pass
 
+
 class WSAccessor(IBaseAccessor):
     """Handle change protocol to wss.
 
-        Responsible for reading from and writing to ws.
+    Responsible for reading from and writing to ws.
     """
 
     class Meta(object):
         """Doc."""
 
-        name = 'ws'
-
+        name = "ws"
 
     async def handle_request(
         self,
-        request: 'Request',
+        request: "Request",
     ) -> "web.WebSocketResponse":
         """Do all the work.
 
@@ -44,7 +46,7 @@ class WSAccessor(IBaseAccessor):
         connection_id = str(uuid.uuid4())
         self._connections[connection_id] = ws_response
         # await self.push(connection_id=connection_id, event=Event(ServerEventKind.INITIAL,{"id":connection_id}))
-        await self._server_event_manager.handle_open(connection_id, self)
+        await self._general_event_manager.server_EM.handle_open(connection_id, self)
         await asyncio.gather(self.read(connection_id), self.tell(connection_id))
         await self.close(connection_id)
         return ws_response
@@ -52,10 +54,14 @@ class WSAccessor(IBaseAccessor):
     async def tell(self, user_id: uuid.uuid4):
         while True:
             await asyncio.sleep(1)
-            #TODO check user for having trading tool
-            if True:
-                await self._server_event_manager.handle_tell(user_id=user_id, ws_accessor=self, trading_tool='test')
-    
+            # TODO check user for having trading tool
+            await self._general_event_manager.server_EM.handle_tell(
+                user_id=user_id,
+                ws_accessor=self,
+                source_accessor=self._source_accessor,
+                trading_tool="ticker_01",
+            )
+
     async def close(self, connection_id: str):
         try:
             connection = self._connections.pop(connection_id)
@@ -74,10 +80,12 @@ class WSAccessor(IBaseAccessor):
         async for message in self._connections[connection_id]:
             self.logger.info(message)
             raw_event = json.loads(message.data)
-            await self._client_event_manager.handle_event(event=Event(
-                kind=raw_event['kind'],
-                payload=raw_event['payload'],
-            ))
+            await self._general_event_manager.client_EM.handle_event(
+                event=Event(
+                    kind=raw_event["kind"],
+                    payload=raw_event["payload"],
+                )
+            )
 
             # await self.push(connection_id, Event("add", {"message": message}))
             # self._refresh_timeout(connection_id)
@@ -86,6 +94,7 @@ class WSAccessor(IBaseAccessor):
             #     kind=raw_event['kind'],
             #     payload=raw_event['payload'],
             # ))
+
     async def _push(self, connection_id: str, data: str):
         try:
             await self._connections[connection_id].send_str(data)
@@ -96,6 +105,8 @@ class WSAccessor(IBaseAccessor):
             raise
 
     def _init(self):
-        self._client_event_manager = ClientEventManager()
-        self._server_event_manager = ServerEventManager()
+        self._general_event_manager = GeneralEventManager()
+        # self._client_event_manager = ClientEventManager()
+        # self._server_event_manager = ServerEventManager()
         self._connections: dict[str, tp.Any] = {}
+        self._source_accessor = KafkaAccessor

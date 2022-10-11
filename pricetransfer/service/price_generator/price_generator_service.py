@@ -1,8 +1,9 @@
 import random
 
-class PriceGeneratorService:
-    def __init__(self):
+class PriceGetterManager:
+    """Подключается к источнику и отдает данные пока его не остановить."""
+    def __init__(self, accssor):
         pass
 
-    def execute(self) -> int:
+    def get(self) -> int:
         return random.randint(0, 100)

@@ -1,5 +1,9 @@
 import pathlib
 import yaml
+import os
+
+KAFKA_CONNECT = os.getenv('KAFKA_CONNECT')
+
 
 BASE_DIR = pathlib.Path(__file__).parent
 config_path = BASE_DIR / "config" / "config.yaml"

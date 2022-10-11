@@ -45,11 +45,23 @@ services:
         ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
 
   price-producer:
     # build: .
     image: priceproducer:0.0.1
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      KAFKA_CONNECT: 'broker:9092'
+    networks:
+      - taegor_kafka
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+
+  price-transfer:
+    image: pricetransfer:0.0.1
     depends_on:
       broker:
         condition: service_healthy

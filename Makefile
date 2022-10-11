@@ -18,9 +18,14 @@ sdist: clean
 	python3 setup.py sdist
 
 build: sdist
-	docker build  --target=api -t $(PROJECT_NAME):$(VERSION) .
+	docker build  --target=transfer_api -t $(PROJECT_NAME):$(VERSION) .
+	#docker build -t $(PROJECT_NAME):$(VERSION) .
 
 run_kafka: build_all
 	docker-compose down
 	docker container prune --force
-	docker-compose up
+	docker-compose up zookeeper broker price-producer
+
+run_transfer: build
+	docker container prune --force
+	docker-compose up price-transfer

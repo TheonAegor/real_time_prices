@@ -1,0 +1,1 @@
+change = {"kind":"change", "payload":{"id":"id","topic":"ticker_01"}}

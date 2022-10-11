@@ -3,10 +3,11 @@ from dataclasses import asdict
 
 from pricetransfer.dto.protocol_dto import Event
 from pricetransfer.dto.protocol_dto import ServerEventKind
-from pricetransfer.dao.kafka_accessor import KafkaAccessor
 
 if typing.TYPE_CHECKING:
     from dao.ws_accessor import WSAccessor
+    from pricetransfer.dao.kafka_accessor import KafkaAccessor
+    from pricetransfer.dao.kafka_accessor import AsyncKafkaAccessor
 
 from pricetransfer.service.logger.logging_service import get_my_logger
 
@@ -30,15 +31,17 @@ class ServerEventManager:
         self,
         user_id: str,
         ws_accessor: "WSAccessor",
-        source_accessor: "KafkaAccessor",
+        source_accessor: "AsyncKafkaAccessor",
         trading_tool: str,
     ):
         self.logger.info("Start telling prices")
         while True:
             pgs = source_accessor(self._share.get("trading_tool", "ticker_99"))
+            await pgs.async_configure()
             resume = True
             self._share["resume"] = True
             async for new_price in pgs.poll_data(resume):
+                self.logger.info("Get data from poll_data")
                 if not self._share.get("resume", True):
                     break
                 await ws_accessor.push(

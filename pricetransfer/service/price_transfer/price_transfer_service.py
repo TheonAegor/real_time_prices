@@ -6,9 +6,11 @@ from pricetransfer.dto.application_dto import Request
 
 class PriceTransferService:
     def __init__(self, accessor: IBaseAccessor, request: Request):
-        self.logger = get_my_logger('PriceTransferService')
+        self.logger = get_my_logger("PriceTransferService")
+        self.logger.info("PriceTransferService start creating")
         self.accessor = accessor(self.logger)
         self.request = request
+        self.logger.info("PriceTransferService created!")
 
     async def execute(self) -> web.WebSocketResponse:
         ret = await self.accessor.handle_request(self.request)

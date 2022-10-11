@@ -69,5 +69,7 @@ services:
       KAFKA_CONNECT: 'broker:9092'
     networks:
       - taegor_kafka
+    ports:
+      - '8080:8080'
     stdin_open: true # docker run -i
     tty: true # docker run -t

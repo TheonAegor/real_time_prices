@@ -9,8 +9,9 @@ class IBaseAccessor(abc.ABC):
         name = "base_accessor"
 
     def __init__(self, logger):
-        self._init()
         self.logger = logger
+        self.logger.info('IBaseaccessor start creating')
+        self._init()
 
     @abc.abstractmethod
     def handle_request(self, request: "Request"):

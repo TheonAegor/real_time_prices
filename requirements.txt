@@ -1,4 +1,5 @@
 aiohttp==3.8.3
+aiokafka==0.7.2
 aiosignal==1.2.0
 astor==0.8.1
 async-timeout==4.0.2

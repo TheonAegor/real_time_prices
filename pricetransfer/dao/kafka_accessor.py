@@ -22,50 +22,43 @@ class AsyncKafkaAccessor(ISourceAccessor):
         self.is_configured = False
         self._init(topic)
 
-    @property
-    def topic(self):
-        return self._topic
+    def async_reconfigure(self, topic, partition):
+        self.logger.info("async REconfigure started")
+        self._tp = topic
+        self._configure_topic_partition(topic, partition)
+        # await self._start_consumer()
+        self._set_from_start()
+        self.logger.info("AsyncKafka async configure finished")
 
-    @topic.setter
-    def topic(self, topic: str) -> str:
-        self._topic = topic
-        self._configure_kafka_consumer(topic)
-        return self._topic
-
-    async def async_configure(self):
+    async def async_configure(self, topic: str, partition: int):
         self.logger.info("AsyncKafka async configure started")
-        await self.start_consumer()
+        self._tp = topic
+        self._configure_topic_partition(topic, partition)
+        await self._start_consumer()
         self._set_from_start()
         self.logger.info("AsyncKafka async configure finished")
 
     async def get_msg(self):
-        self.logger.info(f"Start polling data from Kafka topic {self._topic}")
-        msg = await self._consumer.getone()
-        return msg 
-
-    async def poll_data(self, resume):
         # self.logger.info(f"Start polling data from Kafka topic {self._topic}")
-        # msg = await self._consumer.getone()
-        # return msg 
-        # try:
-        async for msg in self._consumer:
-            # self.logger.debug(f"msg = {msg}")
-            if not resume:
-                self.logger.info(f"STOP, DO NOT RESUME!")
-                break
-            self._last_offset = msg.offset
-            yield msg
-        # finally:
-        #     await self._consumer.stop()
+        msg = await self._consumer.getone()
+        return msg
 
-    async def start_consumer(self):
+    async def stop_consumer(self):
+        await self._consumer.stop()
+
+    async def _start_consumer(self):
         await self._consumer.start()
-
-    def _set_from_end(self):
-        self._consumer.seek_to_end = self._tp
 
     def _set_from_start(self):
         self._consumer.seek(self._tp, self._start_offset)
+
+    def _configure_topic_partition(self, topic: str, partition: int):
+        self.logger.info(
+            f"Partition configuration started: topic={topic}, partition={partition}"
+        )
+        self._tp = AioTopicPartition(topic, partition)
+        self._consumer.assign([self._tp])
+        self.logger.info("Partition assigned")
 
     def _configure_kafka_consumer(self, topic: str) -> bool:
         self.logger.info(
@@ -78,18 +71,6 @@ class AsyncKafkaAccessor(ISourceAccessor):
             )
             self.logger.info("Consumer created")
 
-            self._tp = AioTopicPartition(topic, 0)
-            self._consumer.assign([self._tp])
-
-            self.logger.info("Partition assigned")
-
-            # self._consumer.seek_to_beginning = self._tp
-            # self._last_offset = self._consumer.position(self._tp)
-            # self.logger.info(f"Last offset is {self._last_offset}")
-            # self._set_from_start()
-            # self.logger.info("Seeked to beginings")
-
-            # if self._consumer.bootstrap_connected():
             self.is_configured = True
             return True
         self.is_configured = False
@@ -99,6 +80,21 @@ class AsyncKafkaAccessor(ISourceAccessor):
         self.logger.info("KafkaAccessor created")
         self._configure_kafka_consumer(topic)
         self.logger.info("KafkaAccessor configured")
+
+    async def _poll_data(self, resume):
+        # try:
+        async for msg in self._consumer:
+            # self.logger.debug(f"msg = {msg}")
+            if not resume:
+                self.logger.info(f"STOP, DO NOT RESUME!")
+                break
+            self._last_offset = msg.offset
+            yield msg
+        # finally:
+        #     await self._consumer.stop()
+
+    def _set_from_end(self):
+        self._consumer.seek_to_end = self._tp
 
 
 class KafkaAccessor(ISourceAccessor):

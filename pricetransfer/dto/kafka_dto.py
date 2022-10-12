@@ -14,5 +14,8 @@ class Share:
         self._share.update(new_objects)
 
     def get(self, key, default):
-        self.logger.info(f"Get {key} from Share")
+        # self.logger.info(f"Get {key} from Share")
         return self._share.get(key, default)
+
+    def __str__(self):
+        return " ".join([f"{k}={v}" for k, v in self._share.items()])

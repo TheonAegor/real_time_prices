@@ -35,12 +35,20 @@ class ServerEventManager:
         source_accessor: "AsyncKafkaAccessor",
     ):
         self.logger.info("Start telling prices")
+        resume = True
+        tt = self._share.get("trading_tool", "ticker_99")
+        pgs = source_accessor(tt)
+        await pgs.async_configure(tt, 0)
         while True:
-            tt = self._share.get("trading_tool", "ticker_99")
-            self.logger.info(f"Creating new source accessor in SEM with topic={tt}")
-            pgs = source_accessor(tt)
-            await pgs.async_configure()
+            if not resume:
+                tt = self._share.get("trading_tool", "ticker_99")
+                self.logger.info(
+                    f"Need to reconfigure for topic {tt}, {str(self._share)}"
+                )
+                # pgs.stop_consumer()
+                pgs.async_reconfigure(tt, 0)
             resume = True
+            self.logger.info(f"Creating new source accessor in SEM with topic={tt}")
             self._share.update({"resume": True})
             while resume:
                 new_price = await pgs.get_msg()

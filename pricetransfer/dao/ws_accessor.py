@@ -50,6 +50,7 @@ class WSAccessor(IBaseAccessor):
         ws_response = web.WebSocketResponse()
         await ws_response.prepare(request)
         connection_id = str(uuid.uuid4())
+        self._first_connection_id = connection_id
         self._connections[connection_id] = ws_response
         # await self.push(connection_id=connection_id, event=Event(ServerEventKind.INITIAL,{"id":connection_id}))
         self.logger.info("Before initial message")
@@ -59,18 +60,15 @@ class WSAccessor(IBaseAccessor):
         return ws_response
 
     async def tell(self, user_id: uuid.uuid4):
-        
-        while True:
-            await asyncio.sleep(1)
-            # TODO check user for having trading tool
-            await self._general_event_manager.server_EM.handle_tell(
-                user_id=user_id,
-                ws_accessor=self,
-                source_accessor=self._source_accessor,
-                trading_tool="ticker_01",
-            )
+        # TODO check user for having trading tool
+        await self._general_event_manager.server_EM.handle_tell(
+            user_id=user_id,
+            ws_accessor=self,
+            source_accessor=self._source_accessor,
+        )
 
     async def close(self, connection_id: str):
+        self.logger.info("WS accessor !!!CLOSED!!!")
         try:
             connection = self._connections.pop(connection_id)
             await connection.close()
@@ -86,6 +84,7 @@ class WSAccessor(IBaseAccessor):
 
     async def read(self, connection_id: str):
         async for message in self._connections[connection_id]:
+            self.logger.info("WebSocket read")
             self.logger.info(message)
             raw_event = json.loads(message.data)
             await self._general_event_manager.client_EM.handle_event(
@@ -94,6 +93,7 @@ class WSAccessor(IBaseAccessor):
                     payload=raw_event["payload"],
                 )
             )
+            self.logger.info("Read. Client Event handled")
 
             # await self.push(connection_id, Event("add", {"message": message}))
             # self._refresh_timeout(connection_id)
@@ -114,10 +114,11 @@ class WSAccessor(IBaseAccessor):
 
     def _init(self):
         self.logger.info("WS_ACCESSOR start creating!")
+        self._source_accessor = AsyncKafkaAccessor
+        self.logger.info("Before GeneralEventManager creating")
         self._general_event_manager = GeneralEventManager()
         self.logger.info("GeneralEventManager created")
         # self._client_event_manager = ClientEventManager()
         # self._server_event_manager = ServerEventManager()
         self._connections: dict[str, tp.Any] = {}
-        self._source_accessor = AsyncKafkaAccessor
         self.logger.info("WS_ACCESSOR created!")

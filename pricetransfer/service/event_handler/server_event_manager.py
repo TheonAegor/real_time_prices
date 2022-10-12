@@ -3,6 +3,7 @@ from dataclasses import asdict
 
 from pricetransfer.dto.protocol_dto import Event
 from pricetransfer.dto.protocol_dto import ServerEventKind
+from pricetransfer.dto.kafka_dto import Share
 
 if typing.TYPE_CHECKING:
     from dao.ws_accessor import WSAccessor
@@ -13,7 +14,7 @@ from pricetransfer.service.logger.logging_service import get_my_logger
 
 
 class ServerEventManager:
-    def __init__(self, share: dict):
+    def __init__(self, share: Share):
         self.logger = get_my_logger("ServerEventManager")
         self._share = share
         self.logger.info("ServerEventManager created")
@@ -32,22 +33,35 @@ class ServerEventManager:
         user_id: str,
         ws_accessor: "WSAccessor",
         source_accessor: "AsyncKafkaAccessor",
-        trading_tool: str,
     ):
         self.logger.info("Start telling prices")
         while True:
-            pgs = source_accessor(self._share.get("trading_tool", "ticker_99"))
+            tt = self._share.get("trading_tool", "ticker_99")
+            self.logger.info(f"Creating new source accessor in SEM with topic={tt}")
+            pgs = source_accessor(tt)
             await pgs.async_configure()
             resume = True
-            self._share["resume"] = True
-            async for new_price in pgs.poll_data(resume):
-                self.logger.info("Get data from poll_data")
-                if not self._share.get("resume", True):
-                    break
+            self._share.update({"resume": True})
+            while resume:
+                new_price = await pgs.get_msg()
                 await ws_accessor.push(
                     user_id,
                     event=Event(
                         kind=ServerEventKind.TELL,
-                        payload={"new_price": new_price, "trading_tool": trading_tool},
+                        payload={"new_price": new_price, "trading_tool": tt},
                     ),
                 )
+                resume = self._share.get("resume", True)
+
+            # async for new_price in pgs.poll_data(resume):
+            #     # self.logger.info("Get data from poll_data")
+            #     if not self._share.get("resume", True):
+            #         self.logger.info("STOP RESUME")
+            #         break
+            #     await ws_accessor.push(
+            #         user_id,
+            #         event=Event(
+            #             kind=ServerEventKind.TELL,
+            #             payload={"new_price": new_price, "trading_tool": tt},
+            #         ),
+            #     )

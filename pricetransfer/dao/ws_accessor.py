@@ -116,7 +116,10 @@ class WSAccessor(IBaseAccessor):
         self.logger.info("WS_ACCESSOR start creating!")
         self._source_accessor = AsyncKafkaAccessor
         self.logger.info("Before GeneralEventManager creating")
-        self._general_event_manager = GeneralEventManager()
+        trading_tools = ["ticker_%.2d" % i for i in range(100)]
+        self._general_event_manager = GeneralEventManager(
+            extra={"trading_tools": trading_tools}
+        )
         self.logger.info("GeneralEventManager created")
         # self._client_event_manager = ClientEventManager()
         # self._server_event_manager = ServerEventManager()

@@ -16,6 +16,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
 
   broker:
+    restart: always
     image: confluentinc/cp-kafka:7.0.1
     container_name: broker
     ports:
@@ -59,6 +60,7 @@ services:
       - taegor_kafka
     stdin_open: true # docker run -i
     tty: true # docker run -t
+    restart: on-failure
 
   price-transfer:
     image: pricetransfer:0.0.1
@@ -71,5 +73,14 @@ services:
       - taegor_kafka
     ports:
       - '8080:8080'
-    stdin_open: true # docker run -i
-    tty: true # docker run -t
+    restart: on-failure
+
+  frontend:
+    image: frontend:0.0.1
+    depends_on:
+      broker:
+        condition: service_healthy
+    networks:
+      - taegor_kafka
+    ports:
+      - '3000:3000'

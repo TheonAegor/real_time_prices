@@ -24,7 +24,10 @@ class ServerEventManager:
             user_id,
             event=Event(
                 kind=ServerEventKind.INITIAL,
-                payload={"id": str(user_id)},
+                payload={
+                    "id": str(user_id),
+                    "trading_tools": self._share.get("trading_tools", ""),
+                },
             ),
         )
 
@@ -51,12 +54,17 @@ class ServerEventManager:
             self.logger.info(f"Creating new source accessor in SEM with topic={tt}")
             self._share.update({"resume": True})
             while resume:
-                new_price = await pgs.get_msg()
+                data = await pgs.get_msg()
+                new_price = data.value
                 await ws_accessor.push(
                     user_id,
                     event=Event(
                         kind=ServerEventKind.TELL,
-                        payload={"new_price": new_price, "trading_tool": tt},
+                        payload={
+                            "new_price": new_price,
+                            "trading_tool": tt,
+                            "full_info": data,
+                        },
                     ),
                 )
                 resume = self._share.get("resume", True)

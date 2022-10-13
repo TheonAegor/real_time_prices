@@ -63,7 +63,7 @@ class PriceProducerService:
 
     def __init__(self, producer):
         self._producer = producer()
-        self._timer = 30
+        self._timer = 1
 
     async def asyncexecute(self):
         # counter = 100

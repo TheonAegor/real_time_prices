@@ -1,0 +1,86 @@
+---
+version: '3'
+
+networks:
+  taegor_kafka:
+    name: taegor_kafka
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    networks:
+      - taegor_kafka
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    restart: always
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: broker
+    ports:
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - '9092:9092'
+    depends_on:
+      - zookeeper
+    networks:
+      - taegor_kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test:
+        [
+          'CMD',
+          '/bin/kafka-topics',
+          '--list',
+          '--bootstrap-server',
+          'host.docker.internal:9092',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  price-producer:
+    # build: .
+    image: priceproducer:0.0.1
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      KAFKA_CONNECT: 'broker:9092'
+    networks:
+      - taegor_kafka
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    restart: on-failure
+
+  price-transfer:
+    image: pricetransfer:0.0.1
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      KAFKA_CONNECT: 'broker:9092'
+    networks:
+      - taegor_kafka
+    ports:
+      - '8080:8080'
+    restart: on-failure
+
+  frontend:
+    image: frontend:0.0.1
+    depends_on:
+      broker:
+        condition: service_healthy
+    networks:
+      - taegor_kafka
+    ports:
+      - '3000:3000'

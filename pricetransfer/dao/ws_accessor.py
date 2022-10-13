@@ -1,26 +1,22 @@
-import uuid
-import json
 import asyncio
+import json
 import typing as tp
+import uuid
 from dataclasses import asdict
 
 from aiohttp import web
+
 from pricetransfer.dao.base_accessors import IBaseAccessor
+from pricetransfer.dao.kafka_accessor import AsyncKafkaAccessor
 from pricetransfer.dto.application_dto import Request
 from pricetransfer.dto.protocol_dto import Event
-from pricetransfer.dto.protocol_dto import ServerEventKind
-
-# from service.event_handler.client_event_manager import ClientEventManager
-# from service.event_handler.server_event_manager import ServerEventManager
 from pricetransfer.service.event_handler.general_event_manager import (
     GeneralEventManager,
 )
-from pricetransfer.dao.kafka_accessor import KafkaAccessor
-from pricetransfer.dao.kafka_accessor import AsyncKafkaAccessor
 
 
 class WSConnectionNotFound(Exception):
-    pass
+    """Error for no connection."""
 
 
 class WSAccessor(IBaseAccessor):
@@ -46,16 +42,24 @@ class WSAccessor(IBaseAccessor):
         Returns:
             web.WebsocketResponse
         """
-        self.logger.info("WSAccessor start handling request")
+        self.logger.debug("WSAccessor start handling request")
+
         ws_response = web.WebSocketResponse()
         await ws_response.prepare(request)
         connection_id = str(uuid.uuid4())
         self._first_connection_id = connection_id
         self._connections[connection_id] = ws_response
-        # await self.push(connection_id=connection_id, event=Event(ServerEventKind.INITIAL,{"id":connection_id}))
-        self.logger.info("Before initial message")
-        await self._general_event_manager.server_EM.handle_open(connection_id, self)
-        await asyncio.gather(self.read(connection_id), self.tell(connection_id))
+
+        self.logger.debug("Before initial message")
+
+        await self._general_event_manager.server_EM.handle_open(
+            connection_id,
+            self,
+        )
+        await asyncio.gather(
+            self.read(connection_id),
+            self.tell(connection_id),
+        )
         await self.close(connection_id)
         return ws_response
 
@@ -68,14 +72,14 @@ class WSAccessor(IBaseAccessor):
         )
 
     async def close(self, connection_id: str):
-        self.logger.info("WS accessor !!!CLOSED!!!")
+        self.logger.debug("WS accessor !!!CLOSED!!!")
         try:
             connection = self._connections.pop(connection_id)
-            await connection.close()
         except KeyError:
             return None
+        else:
+            await connection.close()
 
-        # await self.store.geo.handle_close(str(connection_id))
         return None
 
     async def push(self, connection_id: str, event: Event):
@@ -84,44 +88,43 @@ class WSAccessor(IBaseAccessor):
 
     async def read(self, connection_id: str):
         async for message in self._connections[connection_id]:
-            self.logger.info("WebSocket read")
-            self.logger.info(message)
+            self.logger.debug("WebSocket read")
+            self.logger.debug(message)
             raw_event = json.loads(message.data)
             await self._general_event_manager.client_EM.handle_event(
                 event=Event(
                     kind=raw_event["kind"],
                     payload=raw_event["payload"],
-                )
+                ),
             )
-            self.logger.info("Read. Client Event handled")
+            self.logger.debug("Read. Client Event handled")
 
-            # await self.push(connection_id, Event("add", {"message": message}))
-            # self._refresh_timeout(connection_id)
-            # raw_event = json.loads(message.data)
-            # await self.store.geo.handle_event(event=Event(
-            #     kind=raw_event['kind'],
-            #     payload=raw_event['payload'],
-            # ))
-
-    async def _push(self, connection_id: str, data: str):
+    async def _push(self, connection_id: str, data_to_send: str):
         try:
-            await self._connections[connection_id].send_str(data)
-        except KeyError:
-            raise WSConnectionNotFound
-        except ConnectionResetError:
+            await self._connections[connection_id].send_str(data_to_send)
+        except KeyError as err:
+            raise WSConnectionNotFound(err)
+        except ConnectionResetError as err:
             self._connections.pop(connection_id)
-            raise
+            raise err
 
     def _init(self):
-        self.logger.info("WS_ACCESSOR start creating!")
+
+        self.logger.debug("WS_ACCESSOR start creating!")
+
         self._source_accessor = AsyncKafkaAccessor
-        self.logger.info("Before GeneralEventManager creating")
-        trading_tools = ["ticker_%.2d" % i for i in range(100)]
+
+        self.logger.debug("Before GeneralEventManager creating")
+
+        trading_tools = [
+            "ticker_%.2d" % num for num in range(100)  # noqa: WPS323
+        ]
         self._general_event_manager = GeneralEventManager(
-            extra={"trading_tools": trading_tools}
+            extra={"trading_tools": trading_tools},
         )
-        self.logger.info("GeneralEventManager created")
-        # self._client_event_manager = ClientEventManager()
-        # self._server_event_manager = ServerEventManager()
+
+        self.logger.debug("GeneralEventManager created")
+
         self._connections: dict[str, tp.Any] = {}
-        self.logger.info("WS_ACCESSOR created!")
+
+        self.logger.debug("WS_ACCESSOR created!")

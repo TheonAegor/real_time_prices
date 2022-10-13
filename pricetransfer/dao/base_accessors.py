@@ -1,4 +1,5 @@
 import abc
+
 from pricetransfer.dto import Request
 
 
@@ -15,14 +16,16 @@ class IBaseAccessor(abc.ABC):
 
     @abc.abstractmethod
     def handle_request(self, request: "Request"):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _init(self) -> None:
-        pass
+        raise NotImplementedError
 
 
 class ISourceAccessor(abc.ABC):
+    """Interface for source accessors (KafkaAccessor)."""
+
     class Meta(object):
         name = "base_accessor"
 
@@ -32,4 +35,4 @@ class ISourceAccessor(abc.ABC):
 
     @abc.abstractmethod
     def _init(self) -> None:
-        pass
+        raise NotImplementedError

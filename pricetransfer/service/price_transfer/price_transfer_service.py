@@ -1,10 +1,13 @@
 from aiohttp import web
-from pricetransfer.service.logger.logging_service import get_my_logger
+
 from pricetransfer.dao.base_accessors import IBaseAccessor
 from pricetransfer.dto.application_dto import Request
+from pricetransfer.service.logger.logging_service import get_my_logger
 
 
-class PriceTransferService:
+class PriceTransferService(object):
+    """Service for getting messages."""
+
     def __init__(self, accessor: IBaseAccessor, request: Request):
         self.logger = get_my_logger("PriceTransferService")
         self.logger.info("PriceTransferService start creating")

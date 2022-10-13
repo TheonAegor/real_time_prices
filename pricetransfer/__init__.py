@@ -1,6 +1,7 @@
-"""
-Price transfer
-"""
+# flake8: noqa
+"""Price transfer."""
+
+
 __author__ = "Proskurin Egor"
 __maintainer__ = __author__
 

@@ -11,7 +11,7 @@ class IBaseAccessor(abc.ABC):
 
     def __init__(self, logger):
         self.logger = logger
-        self.logger.info('IBaseaccessor start creating')
+        self.logger.info("IBaseaccessor start creating")
         self._init()
 
     @abc.abstractmethod

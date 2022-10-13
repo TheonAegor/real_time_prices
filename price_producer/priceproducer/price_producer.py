@@ -1,37 +1,41 @@
-from random import random
-import time
-import datetime
-from json import dumps
 import asyncio
+import datetime
+import time
+from json import dumps as json_dumps
+from random import random
 
 from kafka import KafkaProducer
+from priceproducer.topic_creator import topic_names
 
 kafka_server = "broker:9092"
 
 
 def get_price_generator():
+    """Generate function for price generating."""
     last_price = 0
 
-    def _generate_movement():
-        movement = -1 if random() < 0.5 else 1
+    def _generate_movement():  # noqa: WPS430
+        movement = -1 if random() < 0.5 else 1  # noqa: S311,WPS459
 
         return movement
 
-    def _generate_new():
-        nonlocal last_price
+    def _generate_new():  # noqa: WPS430
+        nonlocal last_price  # noqa: WPS420
         last_price += _generate_movement()
         return last_price
 
     return _generate_new
 
 
-class KafkaProducerManager:
+# TODO заменить на aiokafka
+class KafkaProducerManager(object):
+    """Set up kafka producer and send msg to topics."""
+
     def __init__(self):
         self._producer = KafkaProducer(
             bootstrap_servers=kafka_server,
-            value_serializer=lambda x: dumps(x).encode("utf-8"),
+            value_serializer=lambda msg: json_dumps(msg).encode("utf-8"),
         )
-        from .topic_creator import topic_names
 
         self._topics = topic_names
         self._gen_of_gens = get_price_generator
@@ -42,49 +46,48 @@ class KafkaProducerManager:
             *[
                 asyncio.create_task(self._producer.send(topic, value=gen()))
                 for topic, gen in self._topics_and_gens
-            ]
+            ],
         )
 
     def produce(self):
         for topic, gen in self._topics_and_gens:
             self._producer.send(
-                topic, value={"value": gen(), "time": str(datetime.datetime.now())}
+                topic,
+                value={
+                    "value": gen(), "time": str(datetime.datetime.now()),
+                },
             )
 
     def _make_topics_and_gens(self):
-        self._topics_and_gens = [(topic, self._gen_of_gens()) for topic in self._topics]
+        self._topics_and_gens = [
+            (topic, self._gen_of_gens()) for topic in self._topics
+        ]
 
     def _init(self):
         self._make_topics_and_gens()
 
 
-class PriceProducerService:
+class PriceProducerService(object):
     """Generates prices every 1 second for 100 trading tools."""
 
     def __init__(self, producer):
         self._producer = producer()
+        self._range = 10000
         self._timer = 1
 
     async def asyncexecute(self):
-        # counter = 100
-        while True:
+        for _ in range(self._range):
             await self._producer.produce()
-            print(f"produce 1 more")
             await asyncio.sleep(self._timer)
-            # counter -= 1
 
     def execute(self):
-        # counter = 100
-        # while counter:
-        while True:
+        for _ in range(self._range):
             self._producer.produce()
-            print(f"produce 1 more")
             time.sleep(self._timer)
-            # counter -= 1
 
 
 def main():
+    """Set up and launches price producing."""
     pps = PriceProducerService(producer=KafkaProducerManager)
 
-    # asyncio.run(pps.execute())
     pps.execute()

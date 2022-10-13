@@ -1,24 +1,3 @@
 {
-  "python.linting.flake8Enabled": true,
-  "python.linting.enabled": false,
-  "python.linting.flake8Args": [
-    "--ignore=Q000,D100,D102,D107,D106",
-    "--verbose"
-  ],
-  "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "file",
-  "editor.formatOnPaste": true,
-  "editor.formatOnType": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[python]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "ms-python.black-formatter"
-  },
-  "prettier.singleQuote": true,
-  "python.formatting.blackArgs": [
-    "--skip-string-normalization",
-    "--line-length",
-    "80"
-  ],
-  "python.formatting.provider": "black"
+  
 }

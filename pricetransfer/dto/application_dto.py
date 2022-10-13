@@ -1,13 +1,17 @@
-from aiohttp import web
-
 from logging import Logger
 
+from aiohttp import web
+
+
 class Application(web.Application):
-    # store: "Store"
+    """Application dto."""
+
     logger: Logger
 
 
 class Request(web.Request):
+    """Request dto."""
+
     user_id: str
 
     @property

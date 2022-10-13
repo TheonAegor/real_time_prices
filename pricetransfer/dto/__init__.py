@@ -1,9 +1,17 @@
-from .application_dto import Application
-from .application_dto import Request
-from .protocol_dto import Event
-from .protocol_dto import ClientEventKind
-from .protocol_dto import ServerEventKind
-from .protocol_dto import User
+# flake8: noqa
+from pricetransfer.dto.application_dto import Application, Request
+from pricetransfer.dto.protocol_dto import (
+    ClientEventKind,
+    Event,
+    ServerEventKind,
+    User,
+)
 
-
-all = (Application, Request, Event, ClientEventKind, ServerEventKind, User)
+all = (  # noqa: WPS125
+    Application,
+    Request,
+    Event,
+    ClientEventKind,
+    ServerEventKind,
+    User,
+)

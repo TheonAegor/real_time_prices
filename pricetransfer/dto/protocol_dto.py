@@ -1,24 +1,34 @@
 import dataclasses
 
+
 @dataclasses.dataclass
-class Event:
+class Event:  # noqa: WPS306
+    """Event structure."""
+
     kind: str
     payload: dict
-    # trading_tool - имя торгового инструмента
-
-@dataclasses.dataclass
-class ServerEventKind:
-    INITIAL = 'initial'  # отправляется при установке соединения с клиентом, сообщает ему выданный id
-    TELL = 'tell' # сообщает новые цены клиенту
 
 
 @dataclasses.dataclass
-class ClientEventKind:
-    CONNECT = 'connect'  # отправляется в ответ на ServerEventKind.INITIAL, содержит данные о клиенте
-    CHANGE = 'change' # отправляется когда клиент меняет тип данных
-    DISCONNECT = 'disconnect'  # отправляется клиентом при ручном отсоединении от сервиса
+class ServerEventKind:  # noqa: WPS306
+    """Server event structure."""
+
+    INITIAL = "initial"  # noqa: WPS115
+    TELL = "tell"  # noqa: WPS115
+
 
 @dataclasses.dataclass
-class User:
+class ClientEventKind:  # noqa: WPS306
+    """Client event structure."""
+
+    CONNECT = "connect"  # noqa: WPS115
+    CHANGE = "change"  # noqa: WPS115
+    DISCONNECT = "disconnect"  # noqa: WPS115
+
+
+@dataclasses.dataclass
+class User:  # noqa: WPS306
+    """User object."""
+
     id: str
     trading_tool: str = None

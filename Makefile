@@ -29,8 +29,7 @@ build_all: docker_stop build
 	cd $(FRONTEND_PROJECT_PATH) && $(MAKE) build
 
 docker_clean:
-	DOCKER_DANGLING_IMAGES=$(docker images -f dangling=true -q);
-	-docker rmi $(DOCKER_DANGLING_IMAGES)
+	-docker rmi $(shell docker images -f dangling=true -q)
 	docker container prune --force
 
 docker_stop: 

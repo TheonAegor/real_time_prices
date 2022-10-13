@@ -13,7 +13,7 @@ class AsyncKafkaAccessor(ISourceAccessor):
 
     def __init__(self, topic: str = None):
         self.logger = get_my_logger("AsyncKafkaAccessor")
-        self.logger.info("Start creating AsyncKafkaAccessor")
+        self.logger.debug("Start creating AsyncKafkaAccessor")
         self._bootstrap_servers = os.getenv("KAFKA_CONNECT", "localhost:9092")
         self._start_offset = 0
         self._topic = topic
@@ -21,20 +21,20 @@ class AsyncKafkaAccessor(ISourceAccessor):
         self._init(topic)
 
     def async_reconfigure(self, topic, partition):
-        self.logger.info("async REconfigure started")
+        self.logger.debug("async REconfigure started")
         self._tp = topic
         self._configure_topic_partition(topic, partition)
         # await self._start_consumer()
         self._set_from_start()
-        self.logger.info("AsyncKafka async configure finished")
+        self.logger.debug("AsyncKafka async configure finished")
 
     async def async_configure(self, topic: str, partition: int):
-        self.logger.info("AsyncKafka async configure started")
+        self.logger.debug("AsyncKafka async configure started")
         self._tp = topic
         self._configure_topic_partition(topic, partition)
         await self._start_consumer()
         self._set_from_start()
-        self.logger.info("AsyncKafka async configure finished")
+        self.logger.debug("AsyncKafka async configure finished")
 
     async def get_msg(self):
         msg = await self._consumer.getone()
@@ -50,7 +50,7 @@ class AsyncKafkaAccessor(ISourceAccessor):
         self._consumer.seek(self._tp, self._start_offset)
 
     def _configure_topic_partition(self, topic: str, partition: int):
-        self.logger.info(
+        self.logger.debug(
             "Partition configuration started: topic={0}, partition={1}".format(
                 topic,
                 partition,
@@ -58,10 +58,10 @@ class AsyncKafkaAccessor(ISourceAccessor):
         )
         self._tp = AioTopicPartition(topic, partition)
         self._consumer.assign([self._tp])
-        self.logger.info("Partition assigned")
+        self.logger.debug("Partition assigned")
 
     def _configure_kafka_consumer(self, topic: str) -> bool:
-        self.logger.info(
+        self.logger.debug(
             "Kafka configuration: server:{0} topic:{1}".format(
                 self._topic,
                 self._bootstrap_servers,
@@ -72,7 +72,7 @@ class AsyncKafkaAccessor(ISourceAccessor):
                 bootstrap_servers=self._bootstrap_servers,
                 value_deserializer=lambda msg: json.loads(msg.decode("utf-8")),
             )
-            self.logger.info("Consumer created")
+            self.logger.debug("Consumer created")
 
             self.is_configured = True
             return True
@@ -80,9 +80,9 @@ class AsyncKafkaAccessor(ISourceAccessor):
         return False
 
     def _init(self, topic: str) -> None:
-        self.logger.info("KafkaAccessor created")
+        self.logger.debug("KafkaAccessor created")
         self._configure_kafka_consumer(topic)
-        self.logger.info("KafkaAccessor configured")
+        self.logger.debug("KafkaAccessor configured")
 
     def _set_from_end(self):
         self._consumer.seek_to_end = self._tp

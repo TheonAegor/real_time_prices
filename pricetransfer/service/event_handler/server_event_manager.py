@@ -17,7 +17,7 @@ class ServerEventManager(object):
         self.logger = get_my_logger("ServerEventManager")
         self._share = share
 
-        self.logger.info("ServerEventManager created")
+        self.logger.debug("ServerEventManager created")
 
     async def handle_open(self, user_id: str, ws_accessor: "WSAccessor"):
         await ws_accessor.push(
@@ -37,7 +37,7 @@ class ServerEventManager(object):
         ws_accessor: "WSAccessor",
         source_accessor: "AsyncKafkaAccessor",
     ):
-        self.logger.info("Start telling prices")
+        self.logger.debug("Start telling prices")
         resume = True
         tt = self._share.get("trading_tool", "ticker_99")
         pgs = source_accessor(tt)

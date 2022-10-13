@@ -16,25 +16,25 @@ def create_topics(topics):
     existing_topic_list = []
     for topic in topics:
         if topic not in existing_topic_list:
-            logger.info("Topic : {0} added ".format(topic))
+            logger.debug("Topic : {0} added ".format(topic))
             topic_list.append(
                 NewTopic(name=topic, num_partitions=1, replication_factor=1),
             )
         else:
-            logger.info("Topic : {topic} already exist ")
+            logger.debug("Topic : {topic} already exist ")
     try:
         if topic_list:
             admin_client.create_topics(
                 new_topics=topic_list,
                 validate_only=False,
             )
-            logger.info("Topic Created Successfully")
+            logger.debug("Topic Created Successfully")
         else:
-            logger.info("Topic Exist")
+            logger.debug("Topic Exist")
     except TopicAlreadyExistsError:
-        logger.info("Topic Already Exist")
+        logger.debug("Topic Already Exist")
     except Exception as err:
-        logger.info(err)
+        logger.debug(err)
 
 
 def delete_topics(topics: list):
@@ -42,11 +42,11 @@ def delete_topics(topics: list):
     try:
         admin_client.delete_topics(topics=topics)
     except UnknownTopicOrPartitionError:
-        logger.info("Topic Doesn't Exist")
+        logger.debug("Topic Doesn't Exist")
     except Exception as err:
-        logger.info(err)
+        logger.debug(err)
     else:
-        logger.info("Topic Deleted Successfully")
+        logger.debug("Topic Deleted Successfully")
 
 
 def main():

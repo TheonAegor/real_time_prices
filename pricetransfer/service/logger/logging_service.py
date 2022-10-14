@@ -1,4 +1,4 @@
-import logging
+import logging.config  # noqa: WPS301
 
 from pricetransfer.settings import LOGGING
 

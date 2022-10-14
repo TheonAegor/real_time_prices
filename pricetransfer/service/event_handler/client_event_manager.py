@@ -18,7 +18,7 @@ class ClientEventManager(object):
 
     async def handle_event(self, event: Event) -> None:
         # TODO сделать проверку что нет connection_id
-        user_id = event.payload["connection_id"]
+        user_id = event.payload["id"]
         if event.kind == ClientEventKind.CONNECT:
             await self._on_connect(user_id, event.payload)
         elif event.kind == ClientEventKind.DISCONNECT:
@@ -36,7 +36,7 @@ class ClientEventManager(object):
 
     async def _on_connect(self, connection_id: uuid.uuid4, payload: dict):
         self.logger.debug("user [{0}] connected".format(connection_id))
-        self._users[connection_id] = User(connection_id=connection_id)
+        self._users[connection_id] = User(id=connection_id)
         self._first_user = self._users[connection_id]
 
     async def _on_disconnect(self, connection_id: uuid.uuid4):
@@ -44,9 +44,5 @@ class ClientEventManager(object):
         self.logger.debug("user [{0}] disconnected".format(connection_id))
 
     async def _on_change(self, connection_id: uuid.uuid4, trading_tool: str):
-        user = self._users[connection_id]
-
-        self.logger.debug("User-{0} changed trading tool".format(user))
-
         self._share.update({"resume": False})
         self._share.update({"trading_tool": trading_tool})

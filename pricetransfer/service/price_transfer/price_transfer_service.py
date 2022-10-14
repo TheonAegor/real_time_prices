@@ -10,10 +10,10 @@ class PriceTransferService(object):
 
     def __init__(self, accessor: IBaseAccessor, request: Request):
         self.logger = get_my_logger("PriceTransferService")
-        self.logger.info("PriceTransferService start creating")
+        self.logger.debug("PriceTransferService start creating")
         self.accessor = accessor(self.logger)
         self.request = request
-        self.logger.info("PriceTransferService created!")
+        self.logger.debug("PriceTransferService created!")
 
     async def execute(self) -> web.WebSocketResponse:
         ret = await self.accessor.handle_request(self.request)

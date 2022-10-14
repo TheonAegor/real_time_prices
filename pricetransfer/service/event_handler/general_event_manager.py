@@ -14,13 +14,13 @@ class GeneralEventManager(object):
     def __init__(self, extra: dict = {}):  # noqa: B006,WPS404
         self.logger = get_my_logger("GeneralEventManager")
 
-        self.logger.info("GeneralEventManager start creating!")
+        self.logger.debug("GeneralEventManager start creating!")
 
         self._share: Share = Share({"resume": True, **extra})
         self.client_EM = ClientEventManager(self._share)
         self.server_EM = ServerEventManager(self._share)
 
-        self.logger.info("GeneralEventManager created!")
+        self.logger.debug("GeneralEventManager created!")
 
     @property
     def topic(self):

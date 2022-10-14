@@ -20,21 +20,25 @@ class AsyncKafkaAccessor(ISourceAccessor):
         self.is_configured = False
         self._init(topic)
 
-    def async_reconfigure(self, topic, partition):
+    async def async_reconfigure(self, topic, partition):
         self.logger.info("async REconfigure started")
         self._tp = topic
         self._configure_topic_partition(topic, partition)
         # await self._start_consumer()
+        self._last_offset = await self._consumer.position(self._tp)
         self._set_from_start()
         self.logger.info("AsyncKafka async configure finished")
+        return self._last_offset
 
     async def async_configure(self, topic: str, partition: int):
         self.logger.info("AsyncKafka async configure started")
         self._tp = topic
         self._configure_topic_partition(topic, partition)
         await self._start_consumer()
+        self._last_offset = await self._consumer.position(self._tp)
         self._set_from_start()
         self.logger.info("AsyncKafka async configure finished")
+        return self._last_offset
 
     async def get_msg(self):
         msg = await self._consumer.getone()

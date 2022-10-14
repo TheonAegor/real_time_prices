@@ -19,7 +19,7 @@ build: sdist
 	docker build -t $(PROJECT_NAME):$(VERSION) .
 
 build_server: build
-	cd $(PRICE_PRODUCER_PROJECT_PATH) && $(MAKE) build
+	cd $(FRONTEND_PROJECT_PATH) && $(MAKE) build
 
 build_front: 
 	cd $(FRONTEND_PROJECT_PATH) && $(MAKE) build
@@ -36,18 +36,23 @@ docker_stop:
 	docker-compose down
 	make docker_clean
 
-run_kafka: build_all
+run_kafka:
+	docker-compose up zookeeper broker
+
+run_producer:
 	docker-compose up zookeeper broker price-producer
 
 run_transfer: build
 	docker-compose up price-transfer
 
 run_server: build_server
-	docker-compose up zookeeper broker price-producer price-transfer
+	docker-compose up price-transfer frontend
 
 run_frontend: build_front
 	docker-compose up frontend
 
 run_all: build_all
 	docker-compose up
-# run_
+
+run_easy:
+	docker-compose up
